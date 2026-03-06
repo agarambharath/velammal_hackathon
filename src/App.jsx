@@ -5,6 +5,8 @@ import Navbar from './components/layout/Navbar';
 import EmergencyButton from './components/layout/EmergencyButton';
 import HealthAssistant from './components/HealthAssistant';
 import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import Locator from './pages/Locator';
 import Emergency from './pages/Emergency';
 import EmergencyMode from './pages/EmergencyMode';
@@ -31,10 +33,12 @@ function App() {
         <main className="container mx-auto px-4 py-8 pb-20">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/locator" element={<Locator />} />
             <Route path="/emergency" element={<Emergency />} />
             <Route path="/emergency-mode" element={<EmergencyMode />} />
-            <Route path="/profile" element={user ? <Profile /> : <Navigate to="/" />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/school" element={<SchoolMode />} />
             <Route path="/risk-calculator" element={<MenstrualRiskCalculator />} />
             <Route path="/stealth" element={<StealthMode />} />

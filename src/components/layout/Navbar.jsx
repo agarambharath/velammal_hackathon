@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 const Navbar = () => {
   const { darkMode, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
   return (
     <nav className="bg-white dark:bg-gray-800 shadow sticky top-0 z-40">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
@@ -26,9 +28,24 @@ const Navbar = () => {
           <Link to="/risk-calculator" className="text-gray-700 dark:text-gray-200 hover:text-pink-600 dark:hover:text-pink-400 transition">
             Risk Check
           </Link>
+          <Link to="/" className="text-gray-700 dark:text-gray-200 hover:text-pink-600 dark:hover:text-pink-400 transition">
+            Home
+          </Link>
           <Link to="/profile" className="text-gray-700 dark:text-gray-200 hover:text-pink-600 dark:hover:text-pink-400 transition">
             Profile
           </Link>
+          {user ? (
+            <button
+              onClick={logout}
+              className="text-gray-700 dark:text-gray-200 hover:text-pink-600 dark:hover:text-pink-400 transition font-medium"
+            >
+              Logout
+            </button>
+          ) : (
+            <Link to="/login" className="text-gray-700 dark:text-gray-200 hover:text-pink-600 dark:hover:text-pink-400 transition font-medium">
+              Login
+            </Link>
+          )}
           <button 
             onClick={toggleTheme} 
             className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200"

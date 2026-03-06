@@ -41,6 +41,18 @@ const Emergency = () => {
   const [requestStatus, setRequestStatus] = useState(null);
   const [showHidden, setShowHidden] = useState(false);
 
+  // Health advice topics and chat bot state
+  const healthAdvice = {
+    cramps: { title: 'Severe Cramps', advice: ['Drink warm water', 'Rest in a comfortable position', 'Use a heating pad if available', 'If pain persists for 2+ hours, visit a clinic'] },
+    heavy: { title: 'Heavy Bleeding', advice: ['Change pad every 3-4 hours', 'Stay hydrated', 'Eat iron-rich foods', 'If bleeding soaks 1 pad/hour, seek medical help'] },
+    delay: { title: 'Period Delay', advice: ['Don\'t panic - stress can cause delays', 'Maintain regular sleep schedule', 'Eat nutritious meals', 'If delayed 2+ weeks, consult a doctor'] },
+    hygiene: { title: 'Hygiene Tips', advice: ['Change pad every 4-6 hours', 'Wash hands before & after changing', 'Use clean, dry pads only', 'Wash genital area with plain water'] },
+  };
+  const [selectedTopic, setSelectedTopic] = useState(null);
+  const [showBotChat, setShowBotChat] = useState(false);
+  const [botMessages, setBotMessages] = useState([]);
+  const [botInput, setBotInput] = useState('');
+
   // Detect device shake for privacy
   React.useEffect(() => {
     if (anonSubMode) {
@@ -117,6 +129,29 @@ const Emergency = () => {
       setChatMessages(prev => [...prev, { type: 'volunteer', text: responses[Math.floor(Math.random() * responses.length)], time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
     }, 1000);
   };
+
+  const handleSendBotMessage = () => {
+    if (!botInput.trim()) return;
+    setBotMessages(prev => [...prev, { type: 'user', text: botInput, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+    const question = botInput.toLowerCase();
+    setBotInput('');
+    setTimeout(() => {
+      let reply = "Sorry, I don't have information on that.";
+      if (question.includes('cramp')) reply = 'Try using a heating pad and resting for a while.';
+      else if (question.includes('bleed')) reply = 'If bleeding heavily change pads often and seek medical help if it continues.';
+      else if (question.includes('delay')) reply = 'Period delays can be due to stress; consult a doctor if it exceeds 2 weeks.';
+      else if (question.includes('hygiene')) reply = 'Keep the area clean and change pads every 4–6 hours.';
+      setBotMessages(prev => [...prev, { type: 'bot', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+    }, 1000);
+  };
+
+  // auto-scroll bot chat when new messages arrive
+  React.useEffect(() => {
+    if (showBotChat) {
+      const container = document.getElementById('botChatContainer');
+      if (container) container.scrollTop = container.scrollHeight;
+    }
+  }, [botMessages, showBotChat]);
 
   const renderContent = () => {
     switch(mode) {
@@ -807,14 +842,7 @@ const Emergency = () => {
 
         // Information & Support
         if (anonSubMode === 'info') {
-          const healthAdvice = {
-            cramps: { title: 'Severe Cramps', advice: ['Drink warm water', 'Rest in a comfortable position', 'Use a heating pad if available', 'If pain persists for 2+ hours, visit a clinic'] },
-            heavy: { title: 'Heavy Bleeding', advice: ['Change pad every 3-4 hours', 'Stay hydrated', 'Eat iron-rich foods', 'If bleeding soaks 1 pad/hour, seek medical help'] },
-            delay: { title: 'Period Delay', advice: ['Don\'t panic - stress can cause delays', 'Maintain regular sleep schedule', 'Eat nutritious meals', 'If delayed 2+ weeks, consult a doctor'] },
-            hygiene: { title: 'Hygiene Tips', advice: ['Change pad every 4-6 hours', 'Wash hands before & after changing', 'Use clean, dry pads only', 'Wash genital area with plain water'] },
-          };
-
-          const [selectedTopic, setSelectedTopic] = useState(null);
+          /* healthAdvice and related state are defined at top level to satisfy hooks rules */
 
           return (
             <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
@@ -828,6 +856,7 @@ const Emergency = () => {
               <h2 className="text-3xl font-bold mb-2">ℹ️ Information & Support</h2>
               <p className="text-gray-600 dark:text-gray-400 mb-6">Get health advice and find nearby help</p>
 
+
               {!selectedTopic ? (
                 <div className="space-y-3">
                   {Object.entries(healthAdvice).map(([key, { title }]) => (
@@ -839,6 +868,12 @@ const Emergency = () => {
                       {key === 'cramps' && '😣'} {key === 'heavy' && '🩸'} {key === 'delay' && '⏰'} {key === 'hygiene' && '🧼'} {title}
                     </button>
                   ))}
+                  <button
+                    onClick={() => setShowBotChat(true)}
+                    className="w-full mt-4 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 font-medium"
+                  >
+                    💬 Chat with Health Bot
+                  </button>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -896,7 +931,62 @@ const Emergency = () => {
     }
   };
 
-  return <div>{renderContent()}</div>;
+  // global chat overlay component for health bot
+  const ChatOverlay = () => (
+    showBotChat ? (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-md p-4 relative">
+          <button
+            onClick={() => setShowBotChat(false)}
+            className="absolute top-2 right-2 text-gray-600 dark:text-gray-300 text-xl font-bold"
+          >
+            ×
+          </button>
+          <div id="botChatContainer" className="h-64 overflow-y-auto mb-2 space-y-2">
+            {botMessages.map((msg, idx) => (
+              <div key={idx} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-xs px-3 py-2 rounded-lg ${msg.type === 'user'
+                  ? 'bg-pink-500 text-white'
+                  : 'bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200'}`}>
+                  <p className="text-sm">{msg.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={botInput}
+              onChange={(e) => setBotInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSendBotMessage()}
+              placeholder="Ask the health bot..."
+              className="flex-1 px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+            />
+            <button
+              onClick={handleSendBotMessage}
+              className="px-4 py-2 bg-teal-500 text-white rounded-lg"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+    ) : null
+  );
+
+  return (
+    <div className="relative">
+      {renderContent()}
+      {/* floating chat button always visible */}
+      <button
+        onClick={() => setShowBotChat(true)}
+        className="fixed bottom-4 right-4 bg-teal-500 text-white p-3 rounded-full shadow-lg z-40"
+      >
+        💬
+      </button>
+      <ChatOverlay />
+    </div>
+  );
 };
 
 export default Emergency;
